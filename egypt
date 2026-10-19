@@ -35,6 +35,13 @@ for the purpose of determining reachability.
 For the supported forms of the "function" arguments, see the
 section titled "Selecting functions".
 
+=item --max-depth n
+
+Show only those functions reachable by at most the specified number of 
+calls from one of the named caller or callee functions.  A max-depth 
+of 0 will show only the named functions, 1 shows their direct callers 
+or callees, etc.
+
 =item --cluster-by-file
 
 Create a Graphviz cluster for each input file, containing the
@@ -108,6 +115,9 @@ demangled form; see the section titled "C++ Support" for details about
 demangling.  Because the demangled form can include commas, multiple
 functions must be given by specifying the command line option multiple
 times rather than as a single option with a comma-separated argument.
+
+The --max-depth option can be used to limit the number of callers or 
+callees displayed.
 
 =head1 VIEWING THE CALL GRAPH
 
@@ -235,13 +245,15 @@ L<gcc>, L<dotty>, L<dot>, L<neato>
 =head1 COPYRIGHT
 
 Copyright 1994-2022 Andreas Gustafsson
+This version © 2026 Alexander Hajnal
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
-=head1 AUTHOR
+=head1 AUTHORS
 
 Andreas Gustafsson
+Alex Kent Hajnal
 
 =cut
 
@@ -250,7 +262,7 @@ use Getopt::Long;
 
 use vars qw($VERSION);
 
-$VERSION = "1.11";
+$VERSION = "1.12";
 
 # Call structure data indexed by calling function name.  This is a
 # reference to a hash table where the key is a the name of a function
@@ -282,6 +294,7 @@ my %omit_map;
 # Values of command line options
 my @callers_of;
 my @callees_of;
+my $max_depth;
 my $include_external = 0;
 my $cluster_by_file = 0;
 my $summarize_callers;
@@ -309,6 +322,7 @@ sub dot_string {
 GetOptions('omit=s' => \@omit,
            'callers=s' => \@callers_of,
            'callees=s' => \@callees_of,
+           'max-depth=i' => \$max_depth,
            'include-external' => \$include_external,
            'cluster-by-file' => \$cluster_by_file,
            'summarize-callers=i' => \$summarize_callers);
@@ -452,14 +466,16 @@ my $genid = "node00000000";
 # Uses the global $funcs.
 
 sub dfs {
-    my ($set, $f, $key) = @_;
+    my ($set, $f, $key, $d) = @_;
     $set->{$f} = undef;
     # Guard against autovivification
     if (exists($funcs->{$f})) {
         if (exists($funcs->{$f}->{$key})) {
             foreach my $g (keys %{$funcs->{$f}->{$key}}) {
                 if (! exists($set->{$g})) {
-                    dfs($set, $g, $key);
+                    unless ( ( defined $max_depth ) && ( $d >= $max_depth ) ) {
+                        dfs($set, $g, $key, $d+1);
+                    }
                 }
             }
         }
@@ -473,7 +489,8 @@ sub functions_reachable_from {
     my ($fs, $key) = @_;
     my $set = { };
     foreach my $f (@$fs) {
-        dfs($set, $f, $key);
+        my $d = 0;
+        dfs($set, $f, $key, $d);
     }
     return $set;
 }

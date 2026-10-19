@@ -1,3 +1,8 @@
+-- Modified version released --
+
+Fork of the original code.
+
+Adds the --max-depth option to limit the size of the output call tree.
 
 -- 1.11 released --
 

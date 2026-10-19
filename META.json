@@ -1,7 +1,8 @@
 {
    "abstract" : "A tool for creating call graphs of C programs",
    "author" : [
-      "Andreas Gustafsson"
+      "Andreas Gustafsson", 
+      "Alex Kent Hajnal"
    ],
    "dynamic_config" : 1,
    "generated_by" : "ExtUtils::MakeMaker version 7.62, CPAN::Meta::Converter version 2.150010",
@@ -32,6 +33,6 @@
       }
    },
    "release_status" : "stable",
-   "version" : "1.11",
+   "version" : "1.12",
    "x_serialization_backend" : "JSON::PP version 4.06"
 }
